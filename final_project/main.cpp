@@ -157,16 +157,19 @@ void MainWndAddWidgets(HWND hWnd) {
 
 	//entry y0 - start y pos
 	CreateWindowA("static", "H:", WS_VISIBLE | WS_CHILD, 5, 90, 100, 30, hWnd, NULL, NULL, NULL);
+	CreateWindowA("static", "m", WS_VISIBLE | WS_CHILD | ES_CENTER, 65, 90, 50, 30, hWnd, NULL, NULL, NULL);
 	hParameterControl_y0 = CreateWindowA("edit", "", WS_VISIBLE | WS_CHILD | WS_BORDER , 30, 89, 50, 20, hWnd, NULL, NULL, NULL);
+
 
 	//entry v0 - starting velocity
 	CreateWindowA("static", "V0:", WS_VISIBLE | WS_CHILD, 5, 140, 100, 30, hWnd, NULL, NULL, NULL);
+	CreateWindowA("static", "m/s", WS_VISIBLE | WS_CHILD | ES_CENTER, 70, 140, 50, 30, hWnd, NULL, NULL, NULL);
 	hParameterControl_v0 = CreateWindowA("edit", "", WS_VISIBLE | WS_CHILD | WS_BORDER , 30, 139, 50, 20, hWnd, NULL, NULL, NULL);
 
 	//buttons
-	CreateWindowA("button", "Set", WS_VISIBLE | WS_CHILD | ES_CENTER, 100, 45, 135, 30, hWnd, (HMENU)OnSetField, NULL, NULL);
-	CreateWindowA("button", "Calculate and Build", WS_VISIBLE | WS_CHILD | ES_CENTER, 100, 80, 135, 30, hWnd, (HMENU)OnCalculate, NULL, NULL);
-	CreateWindowA("button", "Clear", WS_VISIBLE | WS_CHILD | ES_CENTER, 100, 115, 135, 30, hWnd, (HMENU)OnClearField, NULL, NULL);
+	CreateWindowA("button", "Set", WS_VISIBLE | WS_CHILD | ES_CENTER, 110, 45, 135, 30, hWnd, (HMENU)OnSetField, NULL, NULL);
+	CreateWindowA("button", "Calculate and Build", WS_VISIBLE | WS_CHILD | ES_CENTER, 110, 80, 135, 30, hWnd, (HMENU)OnCalculate, NULL, NULL);
+	CreateWindowA("button", "Clear", WS_VISIBLE | WS_CHILD | ES_CENTER, 110, 115, 135, 30, hWnd, (HMENU)OnClearField, NULL, NULL);
 
 
 }

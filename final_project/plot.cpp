@@ -63,66 +63,110 @@ namespace Simulation {
 
     }
 
-    void SimulationWindow::drawTrajectory(HDC hdc, double initialVelocity, double angle, double inititalHeight) {
-
-     
-        const int screenWidth = 800;  
-        const int screenHeight = 600; 
-        const int xOffset = 50;      
-        const int yOffset = 50;      
+    void SimulationWindow::drawTrajectory(HDC hdc, double initialVelocity, double angle, double initialHeight) {
+        const int screenWidth = 800;
+        const int screenHeight = 600;
+        const int xOffset = 70;
+        const int yOffset = 70;
 
 
-        const int axisLengthX = screenWidth - 2 * xOffset;
-        const int axisLengthY = screenHeight - 2 * yOffset;
+        double angleRad = angle * M_PI / 180.0;
+        double vx = initialVelocity * cos(angleRad);
+        double vy = initialVelocity * sin(angleRad);
+
+        double t_flight;
+        if (angle == 0 && initialHeight > 0)
+            t_flight = sqrt(2 * initialHeight / GRAVITY);
+        else
+            t_flight = (vy + sqrt(vy * vy + 2 * GRAVITY * initialHeight)) / GRAVITY;
+
+        double maxX = vx * t_flight;
+        double maxY = initialHeight + (vy * vy) / (2 * GRAVITY);
+
+        double scaleX = (screenWidth - 2 * xOffset) / maxX;
+        double scaleY = (screenHeight - 2 * yOffset) / maxY;
 
 
-
-        
         HPEN axisPen = CreatePen(PS_SOLID, 2, RGB(0, 0, 255));
         HPEN oldPen = (HPEN)SelectObject(hdc, axisPen);
 
-        
         MoveToEx(hdc, xOffset, screenHeight - yOffset, NULL);
-        LineTo(hdc, screenWidth - xOffset, screenHeight - yOffset);
+        LineTo(hdc, screenWidth - xOffset, screenHeight - yOffset); 
 
-       
         MoveToEx(hdc, xOffset, screenHeight - yOffset, NULL);
-        LineTo(hdc, xOffset, yOffset);
+        LineTo(hdc, xOffset, yOffset); 
 
+
+        SetTextColor(hdc, RGB(0, 0, 0));
+        SetBkMode(hdc, TRANSPARENT);
+
+        HFONT font = CreateFont(12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+            DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY,
+            VARIABLE_PITCH, TEXT("Arial"));
+        SelectObject(hdc, font);
+
+
+        for (int i = 0; i <= 10; ++i) {
+            double value = maxX * i / 10.0;
+            int x = static_cast<int>(xOffset + value * scaleX);
+            MoveToEx(hdc, x, screenHeight - yOffset - 5, NULL);
+            LineTo(hdc, x, screenHeight - yOffset + 5);
+
+            char label[32];
+            sprintf(label, "%.0f", value);
+            TextOutA(hdc, x - 10, screenHeight - yOffset + 8, label, strlen(label));
+        }
+
+
+        for (int i = 0; i <= 10; ++i) {
+            double value = maxY * i / 10.0;
+            int y = static_cast<int>(screenHeight - yOffset - value * scaleY);
+            MoveToEx(hdc, xOffset - 5, y, NULL);
+            LineTo(hdc, xOffset + 5, y);
+
+            char label[32];
+            sprintf(label, "%.0f", value);
+            TextOutA(hdc, xOffset - 35, y - 7, label, strlen(label));
+        }
+
+        DeleteObject(font);
         SelectObject(hdc, oldPen);
         DeleteObject(axisPen);
 
-        
+
         HPEN trajectoryPen = CreatePen(PS_SOLID, 2, RGB(255, 0, 0));
         SelectObject(hdc, trajectoryPen);
 
-        double t = 0.0, x = 0.0, y = 0.0;
+        double t = 0.0;
+        bool firstPoint = true;
+        POINT prevPoint = {};
+
         while (true) {
-            t += 0.01;
-            x = initialVelocity * t * cos(angle * M_PI / 180.0);
-            y = initialHeight + (initialVelocity * t * sin(angle * M_PI / 180.0) - 0.5 * GRAVITY * t * t);
-
-
+            double x = vx * t;
+            double y = initialHeight + vy * t - 0.5 * GRAVITY * t * t;
             if (y < 0) break;
 
+            int screenX = static_cast<int>(xOffset + x * scaleX);
+            int screenY = static_cast<int>(screenHeight - yOffset - y * scaleY);
 
-            int screenX = static_cast<int>(xOffset + x);
-            int screenY = static_cast<int>(screenHeight - yOffset - y);
+            if (firstPoint) {
+                MoveToEx(hdc, screenX, screenY, NULL);
+                firstPoint = false;
+            }
+            else {
+                LineTo(hdc, screenX, screenY);
+            }
 
-            if (screenX > screenWidth - xOffset || screenY < yOffset) break;
-
-
-            SetPixel(hdc, screenX, screenY, RGB(255, 0, 0));
+            t += 0.01;
         }
-
-        double FlightLength = ((initialVelocity * initialVelocity) * sin(2 * angle * M_PI / 180)) / GRAVITY;
-        double FlightHeight = initialHeight + ((initialVelocity * initialVelocity) * sin(angle * M_PI / 180) * sin(angle * M_PI / 180)) / (2 * GRAVITY);
-
-        char CalcMsg[200];
-        sprintf(CalcMsg, "FlightLength=%.2f,\nFlightHeight=%.2f", FlightLength, FlightHeight);
-        MessageBoxA(NULL, CalcMsg, "Calculations", MB_ICONINFORMATION);
 
         SelectObject(hdc, oldPen);
         DeleteObject(trajectoryPen);
+
+
+        char CalcMsg[200];
+        sprintf(CalcMsg, "FlightLength = %.2f\nFlightHeight = %.2f", maxX, maxY);
+        MessageBoxA(NULL, CalcMsg, "Calculations", MB_ICONINFORMATION);
     }
+
 } 
