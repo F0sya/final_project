@@ -9,7 +9,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR args, int ncmdsho
 	if (!RegisterClassW(&SoftwareMainClass)) { return -1; }
 	MSG SoftwareMainMessage = { 0 };
 
-	CreateWindow(L"MainWndClass", L"First c++ window", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 650, 550, NULL, NULL, NULL, NULL);
+	CreateWindow(L"MainWndClass", L"Thrown body simulator", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 650, 550, NULL, NULL, NULL, NULL);
 	while (GetMessage(&SoftwareMainMessage, NULL, NULL, NULL)) {
 		TranslateMessage(&SoftwareMainMessage);
 		DispatchMessage(&SoftwareMainMessage);
