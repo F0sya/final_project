@@ -2,6 +2,9 @@
 
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR args, int ncmdshow) {
+	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+	ULONG_PTR gdiplusToken;
+	Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
 	WNDCLASS SoftwareMainClass = NewWindowClass((HBRUSH)COLOR_WINDOW, LoadCursor(NULL, IDC_ARROW), hInst, LoadIcon(NULL, IDI_QUESTION),
 		L"MainWndClass", SoftwareMainProcedure);
@@ -14,6 +17,9 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR args, int ncmdsho
 		TranslateMessage(&SoftwareMainMessage);
 		DispatchMessage(&SoftwareMainMessage);
 	}
+
+	Gdiplus::GdiplusShutdown(gdiplusToken);
+	return 0;
 }
 
 WNDCLASS NewWindowClass(HBRUSH BGCOLOR, HCURSOR Cursor, HINSTANCE hInst, HICON Icon, LPCWSTR Name, WNDPROC Procedure) {
@@ -86,13 +92,22 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 			}
 
 			if (keepgoing) {
-				Simulation::SimulationWindow simWindow((HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), L"ProjectileSimulation", L"Projectile Motion Simulation");
+				Simulation::SimulationWindow simWindow((HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE),
+					L"ProjectileSimulation", L"Projectile Motion Simulation");
 				if (!simWindow.create()) {
 					MessageBoxA(hWnd, "Failed to create the simulation window.", "Error", MB_ICONERROR);
 					break;
 				}
 
+				simWindow.addTrajectory(initialVelocity, angle, initialHeight, RGB(255, 0, 0));
 				simWindow.show(SW_SHOW);
+
+
+				MSG msg = {};
+				while (GetMessage(&msg, NULL, 0, 0)) {
+					TranslateMessage(&msg);
+					DispatchMessage(&msg);
+				}
 			}
 			break;
 		}

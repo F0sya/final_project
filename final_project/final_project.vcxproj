@@ -127,11 +127,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="jpgSaver.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="plot.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="domain.h" />
+    <ClInclude Include="jpgSaver.h" />
     <ClInclude Include="lib.h" />
     <ClInclude Include="plot.h" />
     <ClInclude Include="SoftwareDefinitions.h" />

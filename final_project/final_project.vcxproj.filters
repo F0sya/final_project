@@ -5,6 +5,9 @@
     <ClCompile Include="plot.cpp">
       <Filter>plot</Filter>
     </ClCompile>
+    <ClCompile Include="jpgSaver.cpp">
+      <Filter>screenshot</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="plot.h">
@@ -17,6 +20,9 @@
       <Filter>libs and defs</Filter>
     </ClInclude>
     <ClInclude Include="domain.h" />
+    <ClInclude Include="jpgSaver.h">
+      <Filter>screenshot</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="plot">
@@ -24,6 +30,9 @@
     </Filter>
     <Filter Include="libs and defs">
       <UniqueIdentifier>{4f31a29c-dac6-41c7-8a7f-7d9062b11563}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="screenshot">
+      <UniqueIdentifier>{96979b64-e01e-476a-988d-3bdc6fcbe8f3}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
