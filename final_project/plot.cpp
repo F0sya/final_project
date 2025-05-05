@@ -1,4 +1,4 @@
-// plot.cpp
+п»ї
 #define _CRT_SECURE_NO_WARNINGS
 #define GRAVITY 9.81
 #include "plot.h"
@@ -7,8 +7,9 @@ double initialVelocity = 0.0, angle = 0.0, initialHeight = 0.0;
 
 namespace Simulation {
 
-    SimulationWindow::SimulationWindow(HINSTANCE hInst, LPCWSTR className, LPCWSTR title) 
-        : hInstance(hInst), className(className), windowTitle(title), hwnd(nullptr), scaleX(0.0), scaleY(0.0) {}
+    SimulationWindow::SimulationWindow(HINSTANCE hInst, LPCWSTR className, LPCWSTR title)
+        : hInstance(hInst), className(className), windowTitle(title), hwnd(nullptr), scaleX(0.0), scaleY(0.0) {
+    }
 
     bool SimulationWindow::create() {
         WNDCLASS wc = {};
@@ -19,11 +20,11 @@ namespace Simulation {
 
         if (!RegisterClass(&wc)) return false;
 
+       
         hwnd = CreateWindow(className, windowTitle, WS_OVERLAPPEDWINDOW,
-            CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, NULL, NULL, hInstance, NULL);
+            CW_USEDEFAULT, CW_USEDEFAULT, 1000, 800, NULL, NULL, hInstance, NULL);
 
         if (!hwnd) return false;
-
 
         createControls(hwnd);
         SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
@@ -34,8 +35,29 @@ namespace Simulation {
         ShowWindow(hwnd, nCmdShow);
     }
 
+    void SimulationWindow::calculateTrajectoryParams(TrajectoryParams& traj) {
+        double angleRad = traj.angle * M_PI / 180.0;
+        double vx = traj.velocity * cos(angleRad);
+        double vy = traj.velocity * sin(angleRad);
+
+        
+        double t_flight = (vy + sqrt(vy * vy + 2 * GRAVITY * traj.height)) / GRAVITY;
+
+        
+        traj.maxDistance = vx * t_flight;
+
+        
+        if (vy > 0) {
+            double t_max = vy / GRAVITY;
+            traj.maxHeight = traj.height + vy * t_max - 0.5 * GRAVITY * t_max * t_max;
+        }
+        else {
+            traj.maxHeight = traj.height;
+        }
+    }
+
     void SimulationWindow::saveToJpg() {
-        // Создаем имя файла с текущей датой и временем
+       
         SYSTEMTIME st;
         GetLocalTime(&st);
         wchar_t filename[MAX_PATH];
@@ -51,56 +73,65 @@ namespace Simulation {
         }
     }
     void SimulationWindow::createControls(HWND hWnd) {
-        hCheckboxFixAngle = CreateWindowA("button", "Fix Angle",
-            WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX | WS_TABSTOP,
-            10, 10, 100, 25, hWnd, NULL, hInstance, NULL);
-        SendMessage(hCheckboxFixAngle, BM_SETCHECK, angleFixed ? BST_CHECKED : BST_UNCHECKED, 0);
 
-        hCheckboxFixHeight = CreateWindowA("button", "Fix Height",
-            WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX | WS_TABSTOP,
-            150, 10, 100, 25, hWnd, NULL, hInstance, NULL);
-        SendMessage(hCheckboxFixHeight, BM_SETCHECK, heightFixed ? BST_CHECKED : BST_UNCHECKED, 0);
+        
+        CreateWindowA("static", "Angle (deg):", WS_VISIBLE | WS_CHILD, 10, 10, 80, 20, hWnd, NULL, hInstance, NULL);
+        hEditAngle = CreateWindowA("edit", "", WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER,
+            100, 10, 50, 20, hWnd, NULL, hInstance, NULL);
 
-        hCheckboxFixVelocity = CreateWindowA("button", "Fix Velocity",
-            WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX | WS_TABSTOP,
-            290, 10, 100, 25, hWnd, NULL, hInstance, NULL);
-        SendMessage(hCheckboxFixVelocity, BM_SETCHECK, velocityFixed ? BST_CHECKED : BST_UNCHECKED, 0);
+        CreateWindowA("static", "Height (m):", WS_VISIBLE | WS_CHILD, 160, 10, 80, 20, hWnd, NULL, hInstance, NULL);
+        hEditHeight = CreateWindowA("edit", "", WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER,
+            250, 10, 50, 20, hWnd, NULL, hInstance, NULL);
 
-        // Отключаем получение фокуса чекбоксами
-        SetWindowLong(hCheckboxFixAngle, GWL_STYLE,
-            GetWindowLong(hCheckboxFixAngle, GWL_STYLE) & ~WS_TABSTOP);
-        SetWindowLong(hCheckboxFixHeight, GWL_STYLE,
-            GetWindowLong(hCheckboxFixHeight, GWL_STYLE) & ~WS_TABSTOP);
-        SetWindowLong(hCheckboxFixVelocity, GWL_STYLE,
-            GetWindowLong(hCheckboxFixVelocity, GWL_STYLE) & ~WS_TABSTOP);
+        CreateWindowA("static", "Velocity (m/s):", WS_VISIBLE | WS_CHILD, 310, 10, 90, 20, hWnd, NULL, hInstance, NULL);
+        hEditVelocity = CreateWindowA("edit", "", WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER,
+            410, 10, 50, 20, hWnd, NULL, hInstance, NULL);
+
+        hBtnAddTrajectory = CreateWindowA("button", "Add Trajectory",
+            WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+            470, 10, 120, 20, hWnd, (HMENU)1, hInstance, NULL);
+
+        hInfoListBox = CreateWindowW(
+            L"LISTBOX",
+            L"",
+            WS_VISIBLE | WS_CHILD | WS_BORDER | WS_VSCROLL | LBS_NOTIFY | LBS_HASSTRINGS,
+            50, 600, 900, 150,
+            hWnd,
+            NULL,
+            hInstance,
+            NULL
+        );
+
+        
+        HFONT hFont = CreateFont(16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+            DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+            DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, L"Courier New");
+        SendMessage(hInfoListBox, WM_SETFONT, (WPARAM)hFont, TRUE);
     }
     void SimulationWindow::addTrajectory(double velocity, double angle, double height, COLORREF color) {
-
         if (!hwnd) return;
-
 
         if (color == 0) {
             color = availableColors[trajectories.size() % availableColors.size()];
         }
 
-
         double finalAngle = angleFixed ? fixedAngleValue : angle;
         double finalHeight = heightFixed ? fixedHeightValue : height;
         double finalVelocity = velocityFixed ? fixedVelocityValue : velocity;
 
+        TrajectoryParams newTraj{ finalVelocity, finalAngle, finalHeight, color, 0.0, 0.0 };
+        calculateTrajectoryParams(newTraj); 
 
-        trajectories.push_back({ finalVelocity, finalAngle, finalHeight, color });
-
+        trajectories.push_back(newTraj);
 
         if (angleFixed) fixedAngleValue = finalAngle;
         if (heightFixed) fixedHeightValue = finalHeight;
         if (velocityFixed) fixedVelocityValue = finalVelocity;
 
         InvalidateRect(hwnd, nullptr, TRUE);
-
-
         SetFocus(hwnd);
     }
+
 
     void SimulationWindow::setScale(double x, double y) {
         scaleX = x;
@@ -108,87 +139,73 @@ namespace Simulation {
         InvalidateRect(hwnd, nullptr, TRUE);
     }
     void SimulationWindow::drawTrajectory(HDC hdc) {
-        const int screenWidth = 800;
-        const int screenHeight = 600;
-        const int xOffset = 70;
-        const int yOffset = 70;
-        const int axisLabelOffset = 10;
+        const int screenWidth = 1000;
+        const int screenHeight = 800;
+        const int xOffset = 100;
+        const int yOffset = 100;
+        const int infoAreaHeight = 150;
 
-   
         double maxX = 0.0, maxY = 0.0;
         for (const auto& traj : trajectories) {
-            double angleRad = traj.angle * M_PI / 180.0;
-            double vx = traj.velocity * cos(angleRad);
-            double vy = traj.velocity * sin(angleRad);
-            double t_flight = (vy + sqrt(vy * vy + 2 * GRAVITY * traj.height)) / GRAVITY;
-            double x = vx * t_flight;
-            double y = traj.height + (vy * vy) / (2 * GRAVITY);
-            if (x > maxX) maxX = x;
-            if (y > maxY) maxY = y;
+            if (traj.maxDistance > maxX) maxX = traj.maxDistance;
+            if (traj.maxHeight > maxY) maxY = traj.maxHeight;
         }
 
-        
-        double usedScaleX = (scaleX > 0) ? scaleX : (screenWidth - 2 * xOffset) / maxX;
-        double usedScaleY = (scaleY > 0) ? scaleY : (screenHeight - 2 * yOffset) / maxY;
+        maxX = maxX * 1.1;
+        maxY = maxY * 1.1;
 
-        
+        double usedScaleX = (scaleX > 0) ? scaleX : (screenWidth - 2 * xOffset) / maxX;
+        double usedScaleY = (scaleY > 0) ? scaleY : (screenHeight - 2 * yOffset - infoAreaHeight) / maxY;
+
         HBRUSH bgBrush = CreateSolidBrush(RGB(255, 255, 255));
         RECT rect = { 0, 0, screenWidth, screenHeight };
         FillRect(hdc, &rect, bgBrush);
         DeleteObject(bgBrush);
 
-        
         HPEN gridPen = CreatePen(PS_DOT, 1, RGB(200, 200, 200));
         HPEN oldPen = (HPEN)SelectObject(hdc, gridPen);
 
-        
         for (double x = 0; x <= maxX; x += maxX / 10) {
             int screenX = xOffset + static_cast<int>(x * usedScaleX);
             MoveToEx(hdc, screenX, yOffset, NULL);
-            LineTo(hdc, screenX, screenHeight - yOffset);
+            LineTo(hdc, screenX, screenHeight - yOffset - infoAreaHeight);
         }
 
-        
         for (double y = 0; y <= maxY; y += maxY / 10) {
-            int screenY = screenHeight - yOffset - static_cast<int>(y * usedScaleY);
+            int screenY = screenHeight - yOffset - infoAreaHeight - static_cast<int>(y * usedScaleY);
             MoveToEx(hdc, xOffset, screenY, NULL);
             LineTo(hdc, screenWidth - xOffset, screenY);
         }
 
-     
         HPEN axisPen = CreatePen(PS_SOLID, 2, RGB(0, 0, 0));
         SelectObject(hdc, axisPen);
 
-        
-        MoveToEx(hdc, xOffset, screenHeight - yOffset, NULL);
-        LineTo(hdc, screenWidth - xOffset, screenHeight - yOffset);
+        MoveToEx(hdc, xOffset, screenHeight - yOffset - infoAreaHeight, NULL);
+        LineTo(hdc, screenWidth - xOffset, screenHeight - yOffset - infoAreaHeight);
 
-       
-        MoveToEx(hdc, xOffset, screenHeight - yOffset, NULL);
+        MoveToEx(hdc, xOffset, screenHeight - yOffset - infoAreaHeight, NULL);
         LineTo(hdc, xOffset, yOffset);
 
         SetBkMode(hdc, TRANSPARENT);
         SetTextColor(hdc, RGB(0, 0, 0));
 
-
         for (double x = 0; x <= maxX; x += maxX / 10) {
             int screenX = xOffset + static_cast<int>(x * usedScaleX);
             std::string label = std::to_string(static_cast<int>(x));
-            TextOutA(hdc, screenX - 10, screenHeight - yOffset + axisLabelOffset, label.c_str(), label.length());
+            TextOutA(hdc, screenX - 10, screenHeight - yOffset - infoAreaHeight + 10, label.c_str(), label.length());
         }
 
-      
         for (double y = 0; y <= maxY; y += maxY / 10) {
-            int screenY = screenHeight - yOffset - static_cast<int>(y * usedScaleY);
+            int screenY = screenHeight - yOffset - infoAreaHeight - static_cast<int>(y * usedScaleY);
             std::string label = std::to_string(static_cast<int>(y));
             TextOutA(hdc, xOffset - 30, screenY - 8, label.c_str(), label.length());
         }
 
-      
-        TextOutA(hdc, screenWidth - xOffset + 10, screenHeight - yOffset - 10, "X (m)", 5);
+        TextOutA(hdc, screenWidth - xOffset + 10, screenHeight - yOffset - infoAreaHeight - 10, "X (m)", 5);
         TextOutA(hdc, xOffset - 20, yOffset - 20, "Y (m)", 5);
 
-        for (const auto& traj : trajectories) {
+        for (size_t i = 0; i < trajectories.size(); ++i) {
+            const auto& traj = trajectories[i];
             HPEN pen = CreatePen(PS_SOLID, 2, traj.color);
             HPEN oldPen = (HPEN)SelectObject(hdc, pen);
 
@@ -204,7 +221,7 @@ namespace Simulation {
                 if (y < 0) break;
 
                 int screenX = static_cast<int>(xOffset + x * usedScaleX);
-                int screenY = static_cast<int>(screenHeight - yOffset - y * usedScaleY);
+                int screenY = static_cast<int>(screenHeight - yOffset - infoAreaHeight - y * usedScaleY);
 
                 if (first) {
                     MoveToEx(hdc, screenX, screenY, NULL);
@@ -217,19 +234,31 @@ namespace Simulation {
                 t += 0.01;
             }
 
+            int screenLandingX = static_cast<int>(xOffset + traj.maxDistance * usedScaleX);
+            int screenLandingY = screenHeight - yOffset - infoAreaHeight;
+
+            char numText[10];
+            sprintf(numText, "%d", (int)i + 1);
+            TextOutA(hdc, screenLandingX + 5, screenLandingY - 20, numText, strlen(numText));
+
             SelectObject(hdc, oldPen);
             DeleteObject(pen);
         }
-     
+
+        SendMessage(hInfoListBox, LB_RESETCONTENT, 0, 0);
+        for (size_t i = 0; i < trajectories.size(); ++i) {
+            const auto& traj = trajectories[i];
+            wchar_t infoText[256];
+            swprintf(infoText, 256,
+                L"%d: Distance = %.2f m, Max height = %.2f m (V0=%.1f m/s, angle=%.1fВ°, H0=%.1f m)",
+                (int)i + 1, traj.maxDistance, traj.maxHeight,
+                traj.velocity, traj.angle, traj.height);
+            SendMessage(hInfoListBox, LB_ADDSTRING, 0, (LPARAM)infoText);
+        }
+
         SelectObject(hdc, oldPen);
         DeleteObject(gridPen);
         DeleteObject(axisPen);
-        char info[256];
-        sprintf(info, "Current: V=%.1f m/s, a=%.1f°, H=%.1f m",
-            trajectories.empty() ? 0 : trajectories.back().velocity,
-            trajectories.empty() ? 0 : trajectories.back().angle,
-            trajectories.empty() ? 0 : trajectories.back().height);
-        TextOutA(hdc, 500, 10, info, strlen(info));
     }
 
     LRESULT CALLBACK SimulationWindow::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
@@ -244,26 +273,19 @@ namespace Simulation {
         case WM_COMMAND: {
             if (HIWORD(wParam) == BN_CLICKED) {
                 
-                if ((HWND)lParam == window->hCheckboxFixAngle ||
-                    (HWND)lParam == window->hCheckboxFixHeight ||
-                    (HWND)lParam == window->hCheckboxFixVelocity) {
+                if ((HWND)lParam == window->hBtnAddTrajectory) {
+                    char angleText[32], heightText[32], velocityText[32];
+                    GetWindowTextA(window->hEditAngle, angleText, 32);
+                    GetWindowTextA(window->hEditHeight, heightText, 32);
+                    GetWindowTextA(window->hEditVelocity, velocityText, 32);
 
+                    double angle = atof(angleText);
+                    double height = atof(heightText);
+                    double velocity = atof(velocityText);
 
-                    window->angleFixed = SendMessage(window->hCheckboxFixAngle, BM_GETCHECK, 0, 0) == BST_CHECKED;
-                    window->heightFixed = SendMessage(window->hCheckboxFixHeight, BM_GETCHECK, 0, 0) == BST_CHECKED;
-                    window->velocityFixed = SendMessage(window->hCheckboxFixVelocity, BM_GETCHECK, 0, 0) == BST_CHECKED;
-
-
-                    if (!window->trajectories.empty()) {
-                        const auto& last = window->trajectories.back();
-                        if (window->angleFixed) window->fixedAngleValue = last.angle;
-                        if (window->heightFixed) window->fixedHeightValue = last.height;
-                        if (window->velocityFixed) window->fixedVelocityValue = last.velocity;
+                    if (angle != 0 || height != 0 || velocity != 0) {
+                        window->addTrajectory(velocity, angle, height, 0);
                     }
-
-
-                    SetFocus(hwnd);
-                    InvalidateRect(hwnd, NULL, TRUE);
                 }
             }
             break;

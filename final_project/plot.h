@@ -15,6 +15,8 @@ namespace Simulation {
         double angle;
         double height;
         COLORREF color;
+        double maxDistance;
+        double maxHeight;
     };
 
     class SimulationWindow {
@@ -26,9 +28,11 @@ namespace Simulation {
         std::vector<TrajectoryParams> trajectories;
         double scaleX;
         double scaleY;
-        HWND hCheckboxFixAngle;
-        HWND hCheckboxFixHeight;
-        HWND hCheckboxFixVelocity;
+        HWND hEditAngle;     
+        HWND hEditHeight;      
+        HWND hEditVelocity;    
+        HWND hBtnAddTrajectory;
+        HWND hInfoListBox;
         bool angleFixed = false;
         bool heightFixed = false;
         bool velocityFixed = false;
@@ -36,17 +40,16 @@ namespace Simulation {
         double fixedHeightValue = 0;
         double fixedVelocityValue = 0;
         std::vector<COLORREF> availableColors = {
-            RGB(255, 0, 0),   
-            RGB(0, 150, 0),  
-            RGB(0, 0, 255),   
-            RGB(255, 0, 255), 
-            RGB(255, 165, 0)  
+            RGB(255, 0, 0),
+            RGB(0, 150, 0),
+            RGB(0, 0, 255),
+            RGB(255, 0, 255),
+            RGB(255, 165, 0)
         };
 
         static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
         void drawTrajectory(HDC hdc);
-
-
+        void calculateTrajectoryParams(TrajectoryParams& traj);
     public:
         SimulationWindow(HINSTANCE hInst, LPCWSTR className, LPCWSTR title);
         bool create();
@@ -56,7 +59,5 @@ namespace Simulation {
         void createControls(HWND hWnd);
         void saveToJpg();
     };
-
 }
-
 #endif // SIMULATION_WINDOW_H
